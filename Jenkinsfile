@@ -3,32 +3,32 @@ pipeline{
         label node
     }
     stages{
-        stage("A"){
+        stage('A'){
             steps{
-                echo "========executing A========"
+                echo '========executing A========'
             }
             post{
                 always{
-                    echo "========always========"
+                    echo '========always========'
                 }
                 success{
-                    echo "========A executed successfully========"
+                    echo '========A executed successfully========'
                 }
                 failure{
-                    echo "========A execution failed========"
+                    echo '========A execution failed========'
                 }
             }
         }
     }
     post{
         always{
-            echo "========always========"
+            echo '========always========'
         }
         success{
-            echo "========pipeline executed successfully ========"
+            echo '========pipeline executed successfully ========'
         }
         failure{
-            echo "========pipeline execution failed========"
+            echo '========pipeline execution failed========'
         }
     }
 }
