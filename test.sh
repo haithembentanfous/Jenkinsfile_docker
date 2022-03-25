@@ -1,6 +1,5 @@
 #!/bin/bash
 
-echo "add head"
-echo "hello !"
-echo "hello Br test"
-echo "hello2 Br test"
+echo "add line 1"
+echo "add line 2"
+echo "add line 3"
