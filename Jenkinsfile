@@ -1,15 +1,37 @@
+/* groovylint-disable CompileStatic */
 node {
+    withEnv(['EXIT_STATUS=0']) {
+        sh 'printenv | grep EXIT_STATUS'
+    }
+
+    stage('greeting') {
+        echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+    }
     stage('Build') {
         if (env.BRANCH_NAME == 'master') {
             echo 'I only execute on the master branch'
+            sh 'sh test.sh'
         } else {
-            echo "I execute elsewhere :  env.BRANCH_NAME"
+            echo "I execute elsewhere :  ${env.BRANCH_NAME}"
         }
     }
     stage('Test') {
         echo 'Testing....'
+        env.EXIT_STATUS = """${sh(
+                returnStatus: true,
+                script: 'exit 1'
+            )}"""
     }
     stage('Deploy') {
-        echo 'Deploying....'
+        if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+            if (env.EXIT_STATUS == '0') {
+                echo 'deploy !'
+            }
+            else
+            {
+                echo "do not deploy ${env.EXIT_STATUS} !!!"
+                script : 'exit env.EXIT_STATUS'
+            }
+        }
     }
 }
