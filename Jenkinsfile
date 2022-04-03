@@ -1,37 +1,54 @@
-/* groovylint-disable CompileStatic */
-node {
-    withEnv(['EXIT_STATUS=0']) {
-        sh 'printenv | grep EXIT_STATUS'
+pipeline {
+    agent any
+    environment { 
+        EXIT_STATUS = 1
     }
+    stages {
+        stage('greeting') {
+            steps{
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+                sh 'echo "exit status $EXIT_STATUS"'
+            }
+        }
+        stage('Build') {
+            steps{
+                echo 'building ...'
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        echo 'I only execute on the master branch'
+                        sh 'sh test.sh'
+                        EXIT_STATUS = 1
 
-    stage('greeting') {
-        echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
-    }
-    stage('Build') {
-        if (env.BRANCH_NAME == 'master') {
-            echo 'I only execute on the master branch'
-            sh 'sh test.sh'
-        } else {
-            echo "I execute elsewhere :  ${env.BRANCH_NAME}"
+                    } else {
+                        echo "I execute elsewhere :  ${env.BRANCH_NAME}"
+                    }
+                }
+            }
+        }
+        stage('Test') {
+            steps{
+                echo 'Testing....'
+                script{
+                    if (EXIT_STATUS == 0) {
+                        echo 'deploy !'
+                    }
+                    else
+                    {
+                        echo "do not deploy $EXIT_STATUS !!!"
+                        sh 'exit "${EXIT_STATUS}"'
+                    }
+                }
+
+            } 
         }
     }
-    stage('Test') {
-        echo 'Testing....'
-        env.EXIT_STATUS = """${sh(
-                returnStatus: true,
-                script: 'exit 1'
-            )}"""
-    }
-    stage('Deploy') {
-        if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
-            if (env.EXIT_STATUS == '0') {
-                echo 'deploy !'
-            }
-            else
-            {
-                echo "do not deploy ${env.EXIT_STATUS} !!!"
-                script : 'exit env.EXIT_STATUS'
-            }
+    post {
+        success {
+            echo 'send a success mail & update gerrit'
+        }
+        unstable { echo 'Build is unstable' }
+        failure {
+            echo 'send a fail mail'
         }
     }
 }
