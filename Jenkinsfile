@@ -1,45 +1,67 @@
+/* groovylint-disable-next-line CompileStatic */
 pipeline {
     agent any
-    environment { 
+    environment {
         EXIT_STATUS = 1
     }
     stages {
         stage('greeting') {
-            steps{
+            steps {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
-                sh 'echo "exit status $EXIT_STATUS"'
             }
         }
         stage('Build') {
-            steps{
+            steps {
                 echo 'building ...'
                 script {
                     if (env.BRANCH_NAME == 'master') {
                         echo 'I only execute on the master branch'
                         sh 'sh test.sh'
-                        EXIT_STATUS = 1
-
-                    } else {
+                        EXIT_STATUS = 0
+                    }
+                    else {
                         echo "I execute elsewhere :  ${env.BRANCH_NAME}"
                     }
                 }
             }
         }
         stage('Test') {
-            steps{
+            steps {
                 echo 'Testing....'
-                script{
+                script {
                     if (EXIT_STATUS == 0) {
                         echo 'deploy !'
                     }
                     else
                     {
                         echo "do not deploy $EXIT_STATUS !!!"
-                        sh 'exit "${EXIT_STATUS}"'
+                        sh 'exit $EXIT_STATUS'
                     }
                 }
-
-            } 
+            }
+        }
+        stage('Parallel Stage') {
+            when {
+                branch 'master'
+            }
+            parallel {
+                stage('Branch A') {
+                    agent {
+                        docker 'python:3'
+                    }
+                    steps {
+                        echo 'hello world docker'
+                    }
+                }
+                stage('Branch B') {
+                    agent {
+                        docker 'generatehtmlfromjson:v1.0'
+                    }
+                    steps {
+                        echo 'local habt module to be pushed on git hub github'
+                    }
+                }
+            }
         }
     }
     post {
